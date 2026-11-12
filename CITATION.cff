@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "Jeśli używasz tego oprogramowania, zacytuj je poniżej. / If you use this software, please cite it as below."
+title: "zanieczyszczenie_swiatlem: masowe pobieranie z Google Earth Engine i ocena presji zewnętrznych (światło nocą, gHM, Natura 2000) na dowolny obszar z pliku GPKG"
+version: 1.0.0
+date-released: 2026-11-12
+license: MIT
+repository-code: "https://github.com/gorniakgrzegorz/zanieczyszczenie_swiatlem"
+url: "https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/"
+authors:
+  - family-names: "Górniak"
+    given-names: "Grzegorz"
+keywords:
+  - light pollution
+  - VIIRS DNB
+  - Natura 2000
+  - global human modification
+  - Google Earth Engine

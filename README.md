@@ -1,12 +1,29 @@
-# Zanieczyszczenie światłem i presje zewnętrzne na dowolny obszar z pliku GPKG
+# zanieczyszczenie_swiatlem
 
-Notatnik `Presje_zewnetrzne_AOI.ipynb` (Google Colab, Google Earth Engine) to samodzielna wersja sekcji 35 notatnika „Pokrycie terenu AOI RF DW”: sztuczne światło nocą (VIIRS DNB), globalna modyfikacja przez człowieka (gHM) i obszary Natura 2000.
+Presje zewnętrzne na dowolny obszar z pliku GPKG: sztuczne światło nocą, modyfikacja przez człowieka i obszary Natura 2000.
+
+**Strona z opisem metody i podstawami naukowymi:** https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/
+
+Dwie wersje tego samego kodu: notatnik `zanieczyszczenie_swiatlem.ipynb` (Colab) i skrypt `zanieczyszczenie_swiatlem.py` (terminal).
+
+Notatnik `zanieczyszczenie_swiatlem.ipynb` (Google Colab, Google Earth Engine) to samodzielna wersja sekcji 35 notatnika „Pokrycie terenu AOI RF DW”: sztuczne światło nocą (VIIRS DNB), globalna modyfikacja przez człowieka (gHM) i obszary Natura 2000.
 
 ## Użycie
 
 1. Otwórz notatnik w Colabie i w komórce **1. Ustawienia** wskaż zakres pracy, czyli plik GPKG (`aoi_gpkg`), folder wyników (`folder_wynikow`) i projekt GEE (`projekt_gee`). Zakresem jest suma wszystkich obiektów wskazanej warstwy: dowolny obszar (park, gmina, zlewnia, pole badań, także kilka rozłącznych obiektów), niekoniecznie park krajobrazowy. Układ metryczny wybierany jest automatycznie (PL-1992 w Polsce, w innych miejscach strefa UTM).
    Opcjonalnie można podzielić zakres na dwie części (np. park i otulina) przez `aoi_kolumna_typu`; domyślnie podziału nie ma.
 2. Uruchom wszystkie komórki. Wyniki trafiają do `<folder_wynikow>/<nazwa AOI>/`: `01_tabele`, `02_ryciny`, `03_animacje`, `04_rastry`, `05_wektory`, `06_raport`.
+
+### Skrypt Python (bez notatnika)
+
+```bash
+pip install -r requirements.txt
+earthengine authenticate
+python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE
+python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE --ustaw animacje.miesieczna=false --ustaw presje.skala_m=960
+```
+
+Opcja `--ustaw klucz.podklucz=WARTOŚĆ` (JSON) nadpisuje dowolne ustawienie ze słownika `USTAWIENIA`. Kod wyjścia 2 oznacza błąd któregoś modułu (raport i reszta wyników są zapisane).
 
 ## Co robi
 
@@ -22,7 +39,12 @@ Katalog `testy/` zawiera atrapę modułu `ee` z syntetycznymi danymi i skrypt ur
 ```bash
 pip install geopandas rasterio pyogrio shapely scipy matplotlib imageio tqdm ipython
 python testy/make_aoi.py /tmp/t/AOI.gpkg atrybut
-python testy/run_nb.py Presje_zewnetrzne_AOI.ipynb /tmp/t szybki
+python testy/run_nb.py zanieczyszczenie_swiatlem.ipynb /tmp/t szybki
+# skrypt z atrapą ee (PYTHONPATH wskazuje atrapę)
+PYTHONPATH=testy/stub python zanieczyszczenie_swiatlem.py --gpkg /tmp/t/AOI.gpkg --out /tmp/t/Wyniki --projekt test --ustaw animacje.miesieczna=false
 ```
 
 Test sprawdza przepływ danych, kafle, pamięć podręczną, zapis GeoTIFF, tabele, ryciny i animacje. Nie zastępuje uruchomienia na prawdziwym GEE. Obszary Natura 2000 istnieją tylko w UE, więc dla obszarów spoza UE tabele Natura 2000 są puste (notatnik zapisuje o tym uwagę i liczy dalej).
+
+
+Licencja kodu: MIT (plik `LICENSE`). Dane źródłowe (VIIRS, gHM, WDPA, Sentinel-2, Dynamic World) podlegają licencjom dostawców. Cytowanie: `CITATION.cff` i archiwum Zenodo wydania.

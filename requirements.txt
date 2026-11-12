@@ -1,0 +1,13 @@
+earthengine-api
+geopandas
+rasterio
+pyogrio
+shapely
+scipy
+numpy
+pandas
+matplotlib
+pillow
+imageio
+imageio-ffmpeg
+tqdm

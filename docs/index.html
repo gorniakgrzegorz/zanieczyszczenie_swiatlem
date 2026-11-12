@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>zanieczyszczenie_swiatlem: metoda oceny presji zewnętrznych na obszar z pliku GPKG</title>
+<meta name="description" content="Notatnik i skrypt Python do masowego pobierania z Google Earth Engine i oceny presji zewnętrznych na dowolny obszar: sztuczne światło nocą (VIIRS DNB), modyfikacja przez człowieka (gHM) i obszary Natura 2000.">
+<style>
+  :root { --tekst:#1c2430; --tlo:#ffffff; --akcent:#1b4f72; --akcent2:#7a4b00; --linia:#d5dbe3; --kod:#f2f4f7; --cichy:#556070; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:17px/1.65 Georgia, "Times New Roman", serif; color:var(--tekst); background:var(--tlo); }
+  header { background:#10202e; color:#f4f7fa; padding:56px 20px 44px; }
+  header .w, main, footer .w { max-width:860px; margin:0 auto; }
+  header h1 { font:700 2rem/1.25 system-ui, Segoe UI, Roboto, sans-serif; margin:0 0 12px; letter-spacing:.2px; }
+  header p { margin:0 0 8px; color:#cdd8e3; max-width:70ch; }
+  header .linki { margin-top:22px; display:flex; flex-wrap:wrap; gap:10px; }
+  header .linki a { font:600 .92rem system-ui, sans-serif; color:#10202e; background:#e8eef4; padding:9px 14px; border-radius:6px; text-decoration:none; }
+  header .linki a:hover { background:#fff; }
+  nav { border-bottom:1px solid var(--linia); background:#f8fafc; position:sticky; top:0; z-index:5; }
+  nav ul { max-width:860px; margin:0 auto; padding:0 20px; list-style:none; display:flex; gap:20px; overflow-x:auto; white-space:nowrap; }
+  nav a { display:block; padding:12px 0; font:600 .88rem system-ui, sans-serif; color:var(--akcent); text-decoration:none; }
+  nav a:hover { text-decoration:underline; }
+  main { padding:8px 20px 56px; }
+  h2 { font:700 1.45rem/1.3 system-ui, Segoe UI, Roboto, sans-serif; margin:48px 0 12px; padding-top:8px; border-top:1px solid var(--linia); color:#10202e; }
+  h3 { font:700 1.1rem/1.35 system-ui, Segoe UI, Roboto, sans-serif; margin:26px 0 6px; color:#10202e; }
+  p { margin:0 0 14px; }
+  code { font:0.88em/1.4 ui-monospace, Menlo, Consolas, monospace; background:var(--kod); padding:1px 5px; border-radius:4px; }
+  pre { background:var(--kod); padding:14px 16px; border-radius:8px; overflow-x:auto; font:0.86rem/1.5 ui-monospace, Menlo, Consolas, monospace; border:1px solid var(--linia); }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; width:100%; margin:12px 0 20px; font:0.9rem/1.45 system-ui, sans-serif; }
+  th, td { border:1px solid var(--linia); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#eef2f6; }
+  .uwaga { border-left:4px solid var(--akcent2); background:#fdf6ea; padding:12px 16px; margin:18px 0; border-radius:0 6px 6px 0; font:0.95rem/1.55 system-ui, sans-serif; }
+  .uwaga strong { color:var(--akcent2); }
+  .rownanie { background:var(--kod); border:1px solid var(--linia); border-radius:8px; padding:12px 16px; margin:14px 0; font:0.95rem/1.7 ui-monospace, Menlo, Consolas, monospace; overflow-x:auto; }
+  figure { margin:22px 0; }
+  figcaption { font:0.88rem/1.5 system-ui, sans-serif; color:var(--cichy); margin-top:6px; }
+  ol.kroki > li { margin-bottom:10px; }
+  .ref li { margin-bottom:8px; font-size:0.93rem; line-height:1.5; }
+  .ref a, main a { color:var(--akcent); }
+  footer { border-top:1px solid var(--linia); padding:26px 20px 40px; font:0.88rem/1.6 system-ui, sans-serif; color:var(--cichy); background:#f8fafc; }
+  sup a { text-decoration:none; font-size:.8em; }
+  @media (max-width:560px) { header h1 { font-size:1.55rem; } body { font-size:16px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="w">
+    <h1>zanieczyszczenie_swiatlem</h1>
+    <p>Metoda masowego pobierania z Google Earth Engine i oceny presji zewnętrznych na dowolny obszar z pliku GPKG: sztuczne światło nocą (VIIRS DNB), globalna modyfikacja przez człowieka (gHM) oraz obszary Natura 2000.</p>
+    <p>Wersja 1.0.0. Notatnik Google Colab i niezależny skrypt Python, te same komórki kodu.</p>
+    <div class="linki">
+      <a href="https://github.com/gorniakgrzegorz/zanieczyszczenie_swiatlem">Repozytorium GitHub</a>
+      <a href="https://github.com/gorniakgrzegorz/zanieczyszczenie_swiatlem/releases/latest">Wydanie (release)</a>
+      <a href="https://colab.research.google.com/github/gorniakgrzegorz/zanieczyszczenie_swiatlem/blob/main/zanieczyszczenie_swiatlem.ipynb">Otwórz w Colabie</a>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#cel">Cel</a></li>
+    <li><a href="#dane">Dane</a></li>
+    <li><a href="#metoda">Metoda krok po kroku</a></li>
+    <li><a href="#nauka">Podstawy naukowe</a></li>
+    <li><a href="#ograniczenia">Ograniczenia</a></li>
+    <li><a href="#uruchomienie">Uruchomienie</a></li>
+    <li><a href="#wyniki">Wyniki</a></li>
+    <li><a href="#literatura">Literatura</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<h2 id="cel">1. Cel i zakres</h2>
+<p>Narzędzie odpowiada na trzy pytania o dowolny obszar wskazany w pliku GeoPackage: ile sztucznego światła nocą dociera do obszaru i jego otoczenia oraz jak zmienia się ono w czasie, jak silnie obszar i jego sąsiedztwo są przekształcone przez człowieka oraz jaką część zajmują obszary Natura 2000 i czy zmiany pokrycia terenu w sieci Natura 2000 różnią się od zmian poza nią.</p>
+<p>Zakresem pracy jest suma wszystkich obiektów wskazanej warstwy pliku GPKG. Może to być park, gmina, zlewnia, pole badań, także kilka rozłącznych obiektów. Obszar nie musi być parkiem krajobrazowym ani leżeć w Polsce. Warstwy Natura 2000 istnieją tylko w Unii Europejskiej, więc poza nią odpowiednie tabele są puste, a narzędzie zapisuje o tym uwagę i liczy dalej.</p>
+<p>Główną część pracy wykonuje masowe pobieranie: dla obszaru z GPKG skrypt sam pobiera z Google Earth Engine (GEE) roczne mediany VIIRS, wszystkie miesięczne kompozyty VIIRS, gHM, raster Natura 2000, tło Sentinel-2 i mapy Dynamic World, a następnie zapisuje je jako GeoTIFF i w lokalnej pamięci podręcznej.</p>
+
+<figure>
+<svg viewBox="0 0 860 190" role="img" aria-label="Schemat przepływu: plik GPKG, strefy i siatka 30 m, pobieranie z GEE, analiza, wyniki" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, Segoe UI, sans-serif" font-size="13">
+  <defs><marker id="strz" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1b4f72"/></marker></defs>
+  <g fill="#eef3f8" stroke="#1b4f72" stroke-width="1.4">
+    <rect x="6" y="50" width="140" height="90" rx="8"/>
+    <rect x="186" y="50" width="150" height="90" rx="8"/>
+    <rect x="376" y="50" width="150" height="90" rx="8"/>
+    <rect x="566" y="50" width="130" height="90" rx="8"/>
+    <rect x="736" y="50" width="118" height="90" rx="8"/>
+  </g>
+  <g fill="#10202e" text-anchor="middle">
+    <text x="76" y="82" font-weight="700">Plik GPKG</text><text x="76" y="102">dowolny obszar</text><text x="76" y="120">(zakres pracy)</text>
+    <text x="261" y="82" font-weight="700">Strefy i siatka</text><text x="261" y="102">AOI, pierścień 5 km,</text><text x="261" y="120">siatka 30 m</text>
+    <text x="451" y="82" font-weight="700">Pobieranie z GEE</text><text x="451" y="102">kafle, ponawianie,</text><text x="451" y="120">pamięć podręczna</text>
+    <text x="631" y="82" font-weight="700">Analiza</text><text x="631" y="102">tabele, trendy,</text><text x="631" y="120">porównania</text>
+    <text x="795" y="82" font-weight="700">Wyniki</text><text x="795" y="102">GeoTIFF, CSV,</text><text x="795" y="120">ryciny, animacje</text>
+  </g>
+  <g stroke="#1b4f72" stroke-width="1.6" marker-end="url(#strz)">
+    <line x1="148" y1="95" x2="182" y2="95"/><line x1="338" y1="95" x2="372" y2="95"/>
+    <line x1="528" y1="95" x2="562" y2="95"/><line x1="698" y1="95" x2="732" y2="95"/>
+  </g>
+  <text x="451" y="28" text-anchor="middle" fill="#556070">VIIRS DNB · gHM · WDPA · Sentinel-2 · Dynamic World</text>
+  <text x="451" y="172" text-anchor="middle" fill="#556070">błąd jednego modułu trafia do raportu, pozostałe moduły liczą dalej</text>
+</svg>
+<figcaption>Rys. 1. Przepływ pracy narzędzia.</figcaption>
+</figure>
+
+<h2 id="dane">2. Dane</h2>
+<table>
+<thead><tr><th>Warstwa</th><th>Identyfikator w GEE</th><th>Rola w analizie</th></tr></thead>
+<tbody>
+<tr><td>VIIRS DNB, miesięczne kompozyty z korektą światła rozproszonego (pasma <code>avg_rad</code>, <code>cf_cvg</code>)</td><td><code>NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG</code></td><td>Sztuczne światło nocą: radiancja w nW/(cm²·sr) i liczba obserwacji bezchmurnych. Producent: Earth Observation Group, Colorado School of Mines.</td></tr>
+<tr><td>Global Human Modification</td><td><code>CSP/HM/GlobalHumanModification</code></td><td>Wskaźnik 0–1, stan około 2016 r., rozdzielczość około 1 km <sup><a href="#r10">[10]</a></sup>.</td></tr>
+<tr><td>World Database on Protected Areas</td><td><code>WCMC/WDPA/current/polygons</code></td><td>Granice obszarów Natura 2000 (siedliskowe i ptasie) oraz rezerwatów przyrody.</td></tr>
+<tr><td>Sentinel-2 z maską Cloud Score+</td><td><code>COPERNICUS/S2_SR_HARMONIZED</code></td><td>Tło map (kompozyt medianowy) <sup><a href="#r13">[13]</a></sup>.</td></tr>
+<tr><td>Dynamic World</td><td><code>GOOGLE/DYNAMICWORLD/V1</code></td><td>Pokrycie terenu 10 m do porównania zmian w Natura 2000 i poza nią <sup><a href="#r12">[12]</a></sup>.</td></tr>
+</tbody>
+</table>
+<p>Do publikacji zaleca się wskazać datowaną wersję WDPA (<code>WCMC/WDPA/RRRRMM/polygons</code>), żeby wynik był odtwarzalny. Kolekcja bieżąca zmienia się w czasie.</p>
+
+<h2 id="metoda">3. Metoda krok po kroku</h2>
+<ol class="kroki">
+<li><strong>Zakres pracy.</strong> Skrypt wczytuje wskazaną warstwę GPKG i łączy wszystkie obiekty w jeden obszar (AOI). Wybiera układ metryczny: PL-1992 (EPSG:2180) w Polsce, w innych miejscach strefę UTM właściwą dla środka obszaru. Opcjonalnie dzieli AOI na dwie części według atrybutu (na przykład park i otulina), żeby policzyć je osobno.</li>
+<li><strong>Strefy i siatka.</strong> Tworzy pierścień o promieniu 5 km wokół AOI (otoczenie, z którego dociera rozproszone światło) oraz siatkę 30 m wyrównaną do tej samej siatki co w notatniku głównym, dzięki czemu rastry z obu narzędzi się pokrywają. Dane VIIRS i gHM liczone są na siatce grubszej, 480 m (16 pikseli 30 m), zbliżonej do natywnej rozdzielczości VIIRS. Piksel gruby należy do strefy, jeśli co najmniej połowa zawartych w nim pikseli 30 m leży w tej strefie.</li>
+<li><strong>Pobieranie z GEE.</strong> Każdy obraz jest pobierany kaflami 512 × 512 pikseli przez <code>ee.data.computePixels</code>, z ponawianiem błędów przejściowych i zapisem atomowym do pamięci podręcznej (<code>.npz</code>), której klucz zależy od definicji obrazu. Wiele obrazów pobiera się równolegle. Przerwany bieg wznawia się bez ponownych zapytań do GEE.</li>
+<li><strong>Światło nocą, wyniki roczne.</strong> Dla każdego roku skrypt bierze mediany z miesięcznych obrazów, odrzucając piksele bez obserwacji (<code>cf_cvg</code> = 0). Mediana ogranicza wpływ jednorazowych zdarzeń (pożary, zorza, statki), których wersja 1 produktu nie filtruje. Radiancja jest zapisywana jako liczba całkowita (wartość × 100), brak danych jako −999999. W każdej strefie liczona jest średnia, mediana i suma radiancji. Suma jest wskaźnikiem przyjętym w ocenie polskich parków <sup><a href="#r1">[1]</a></sup>, bo uwzględnia powierzchnię oświetloną, a nie tylko typowe jasności.</li>
+<li><strong>Światło nocą, wyniki miesięczne.</strong> Wszystkie dostępne miesięczne kompozyty (radiancja i liczba obserwacji) są pobierane i zapisywane jako wielopasmowy GeoTIFF. Z nich powstaje tabela miesięczna, mapa cieplna lat × miesiące i animacja.</li>
+<li><strong>Trend.</strong> Na rocznych wartościach średniej radiancji w strefie (co najmniej pięć lat danych) liczone jest nachylenie Theila-Sena (mediana nachyleń wszystkich par punktów) <sup><a href="#r14">[14]</a></sup> oraz test Manna-Kendalla na istnienie monotonicznego trendu <sup><a href="#r15">[15]</a></sup>. Tabela podaje nachylenie w nW/(cm²·sr) na rok, zmianę względną w procentach na rok (nachylenie podzielone przez średnią z okresu) i wartość p. Statystyka testu to
+  <div class="rownanie">S = Σ sgn(x<sub>j</sub> − x<sub>i</sub>) dla i &lt; j;&nbsp; Var(S) = n(n − 1)(2n + 5) / 18<br>Z = (S − 1)/√Var(S) dla S &gt; 0, Z = (S + 1)/√Var(S) dla S &lt; 0;&nbsp; p = 2Φ(−|Z|)</div>
+  Wariancja jest podana bez poprawki na powtórzenia wartości, a test zakłada brak autokorelacji szeregu (zob. ograniczenia).</li>
+<li><strong>Modyfikacja przez człowieka.</strong> Warstwa gHM jest pobierana na siatce 480 m. W każdej strefie liczona jest średnia i mediana oraz udział powierzchni powyżej progu 0,4. Próg 0,4 jest umowną granicą silnej modyfikacji, ustawioną w skrypcie. Producent warstwy nie definiuje klas ani progów w opisie zbioru w GEE, więc próg można i należy dostosować do pytania badawczego.</li>
+<li><strong>Natura 2000.</strong> Z WDPA wybierane są poligony o oznaczeniach siedliskowych (Habitats Directive Site, Site of Community Importance) i ptasich (Birds Directive Site) oraz rezerwaty. Skrypt rasteryzuje je na siatce analizy i liczy udział sieci Natura 2000 w AOI i w pierścieniu.</li>
+<li><strong>Zmiany pokrycia terenu w Natura 2000 i poza nią.</strong> Źródłem map jest (a) plik RF 5 klas z notatnika głównego, jeśli istnieje i siatka się zgadza, albo (b) Dynamic World: modalna etykieta z sezonu czerwiec-wrzesień dla dwóch epok, z 10 m agregowana większością do 30 m i sprowadzona do pięciu klas (zabudowa, lasy, wody, trawy i krzewy, uprawy; gleba odkryta i śnieg trafiają do klasy trawy i krzewy). Dla każdej strefy i dla pikseli wewnątrz i na zewnątrz sieci Natura 2000 liczone są udziały nowej zabudowy, ubytku i przyrostu lasu. Grupy mniejsze niż 100 pikseli są pomijane.</li>
+<li><strong>Wyniki i raport.</strong> Tabele CSV, ryciny PNG, animacje (GIF, MP4), rastry GeoTIFF, wektory GPKG oraz raport: parametry biegu (JSON), opis źródeł i ograniczeń (Markdown) i lista błędów modułów, jeśli wystąpiły.</li>
+</ol>
+
+<h2 id="nauka">4. Podstawy naukowe</h2>
+
+<h3>4.1. Dlaczego światło nocą jest presją na przyrodę</h3>
+<p>Sztuczne światło nocą zaburza naturalny cykl światła i ciemności, który reguluje zegary biologiczne, żerowanie, rozmnażanie i migracje wielu grup organizmów. Mechanizmy opisano w przeglądzie Gastona i in. <sup><a href="#r4">[4]</a></sup>, a postulaty badawcze i polityczne w pracy Hölkera i in. <sup><a href="#r5">[5]</a></sup>. Wpływ nie kończy się na granicy oświetlonego miejsca: światło rozproszone w atmosferze (poświata nocnego nieba) sięga obszarów odległych od miast. Globalny atlas jasności nocnego nieba pokazuje skalę tego zjawiska <sup><a href="#r6">[6]</a></sup>, a analizy nakładania atlasu na sieci obszarów chronionych wykazały, że znaczna część obszarów ważnych dla bioróżnorodności i obszarów chronionych leży pod rozjaśnionym niebem <sup><a href="#r8">[8]</a>,<a href="#r9">[9]</a></sup>. Dla polskich parków narodowych i krajobrazowych opracowano skalę ELP oceniającą oddziaływanie światła <sup><a href="#r1">[1]</a></sup>. Stąd potrzeba oceny nie tylko samego obszaru, lecz także jego otoczenia, co realizuje pierścień presji.</p>
+
+<h3>4.2. Dlaczego VIIRS DNB</h3>
+<p>Radiometr VIIRS na satelitach serii Suomi NPP i NOAA-20 ma pasmo dzień/noc (DNB) bardzo czułe na słabe światło, co umożliwia obserwację oświetlenia nocnego w skali globalnej <sup><a href="#r2">[2]</a></sup>. Miesięczne kompozyty uśredniają obserwacje bezchmurne, a roczne szeregi tworzy się z kompozytów miesięcznych <sup><a href="#r3">[3]</a></sup>. Wersja z korektą światła rozproszonego (VCMSLCFG) poszerza obszar użytecznych obserwacji i poprawia zakres dynamiki, ale według opisu zbioru nie filtruje świateł chwilowych ani nie oddziela świateł od tła. Dlatego narzędzie używa mediany rocznej z miesięcy z obserwacjami, a nie pojedynczych miesięcy, i zapisuje obok radiancji liczbę obserwacji (<code>cf_cvg</code>).</p>
+<p>Wskaźnik sumy radiancji w strefie, a nie samej średniej, odpowiada praktyce oceny polskich obszarów chronionych <sup><a href="#r1">[1]</a></sup>: duży, słabo oświetlony obszar i mały, silnie oświetlony mogą mieć podobną średnią, ale różne sumy. Kierunek trendu radiancji dla Ziemi jest przedmiotem badań: analiza satelitarna wykazała wzrost oświetlonej powierzchni i radiancji w latach 2012-2016 <sup><a href="#r7">[7]</a></sup>, jednak lokalnie (na przykład po wymianie opraw na LED) wynik może być przeciwny, bo czujnik jest ślepy na światło niebieskie.</p>
+
+<h3>4.3. Modyfikacja przez człowieka</h3>
+<p>Wskaźnik gHM łączy w jednym gradiencie 0-1 wpływ zabudowy, rolnictwa, transportu, energetyki, wydobycia i innych presji <sup><a href="#r10">[10]</a>,<a href="#r11">[11]</a></sup>. Daje to miarę presji, której nie widać w samym świetle: obszar może być ciemny i jednocześnie otoczony silnie przekształconym krajobrazem. Używamy go jako zmiennej opisowej, w jednym stanie czasowym, bez interpretacji przyczynowej.</p>
+
+<h3>4.4. Trend nieparametryczny</h3>
+<p>Nachylenie Theila-Sena jest odporne na wartości odstające i nie zakłada rozkładu normalnego <sup><a href="#r14">[14]</a></sup>, a test Manna-Kendalla ocenia, czy szereg ma monotoniczny trend <sup><a href="#r15">[15]</a></sup>. Szereg roczny dla jednego obszaru ma kilkanaście punktów, więc moc testu jest ograniczona; istotność statystyczna nie przesądza o znaczeniu ekologicznym.</p>
+
+<h3>4.5. Porównanie wewnątrz i na zewnątrz Natura 2000</h3>
+<p>Różnica zmian pokrycia terenu wewnątrz i na zewnątrz obszarów chronionych nie jest oceną skuteczności ochrony. Obszary chronione są lokalizowane nieprzypadkowo, częściej tam, gdzie presja rozwojowa jest mniejsza (wyżej, dalej od miast) <sup><a href="#r16">[16]</a></sup>, a szacunki skuteczności bez kontroli tej różnicy lokalizacji są zawyżone <sup><a href="#r17">[17]</a></sup>. Dlatego narzędzie podaje tylko opis porównawczy, bez wniosku o efekcie przyczynowym.</p>
+
+<h2 id="ograniczenia">5. Ograniczenia</h2>
+<ul>
+<li><strong>Rozdzielczość i widmo.</strong> VIIRS (około 500 m) nie rozróżnia pojedynczych źródeł. Pasmo DNB nie rejestruje światła niebieskiego poniżej około 500 nm, więc przejście na oświetlenie LED o dużej temperaturze barwowej może być niedoszacowane lub wyglądać jak spadek radiancji.</li>
+<li><strong>Luki sezonowe.</strong> Latem w średnich i wysokich szerokościach geograficznych (w tym w Polsce) krótkie noce i światło rozproszone ograniczają liczbę użytecznych obserwacji. Mediana roczna z miesięcy z obserwacjami może więc różnić się składem miesięcy między latami. Niepełny rok bieżący warto wyłączyć z analizy przez zawężenie <code>viirs_lata</code>.</li>
+<li><strong>Światła chwilowe.</strong> Wersja 1 kompozytów nie filtruje zorzy, pożarów, statków i innych świateł tymczasowych. Mediana rocznych ogranicza, lecz nie usuwa tego wpływu.</li>
+<li><strong>gHM.</strong> Jeden stan (około 2016), więc nie opisuje zmian w czasie. Próg 0,4 jest umowny i nie wynika z opisu zbioru w GEE.</li>
+<li><strong>WDPA.</strong> Granice mogą odbiegać od rejestrów krajowych (dla Polski: Generalna Dyrekcja Ochrony Środowiska). Wersja bieżąca zmienia się w czasie.</li>
+<li><strong>Test trendu.</strong> Test Manna-Kendalla w tej postaci zakłada brak autokorelacji szeregu; autokorelacja zawyża istotność <sup><a href="#r18">[18]</a>,<a href="#r19">[19]</a></sup>. Brak poprawki na powtórzenia wartości. Przy krótkim szeregu wynik należy traktować orientacyjnie.</li>
+<li><strong>Porównanie w Natura 2000.</strong> Opis, nie efekt przyczynowy (zob. 4.5). Dynamic World jest klasyfikacją spektralną o 10 m i przy agregacji do 30 m część zmian drobnych znika; zabudowę w obrębie lasu i wyręby mogą mylić się z innymi klasami.</li>
+<li><strong>Status testów.</strong> Notatnik i skrypt przetestowano na syntetycznym zastępniku modułu <code>ee</code> (pliki w katalogu <code>testy/</code>): sprawdzono przepływ danych, kafle, pamięć podręczną, georeferencję GeoTIFF, tabele, ryciny i animacje. To nie jest uruchomienie na prawdziwym GEE, a strona nie zawiera żadnych wyników z danych rzeczywistych. Pierwsze uruchomienie na własnym obszarze należy zacząć od małego pliku GPKG.</li>
+</ul>
+
+<h2 id="uruchomienie">6. Uruchomienie</h2>
+<h3>6.1. Notatnik (Google Colab)</h3>
+<ol>
+<li>Otwórz <a href="https://colab.research.google.com/github/gorniakgrzegorz/zanieczyszczenie_swiatlem/blob/main/zanieczyszczenie_swiatlem.ipynb">notatnik w Colabie</a>.</li>
+<li>W komórce <em>1. Ustawienia</em> wskaż plik GPKG (<code>aoi_gpkg</code>), folder wyników (<code>folder_wynikow</code>) i projekt GEE (<code>projekt_gee</code>).</li>
+<li>Uruchom wszystkie komórki. Wyniki trafiają do <code>&lt;folder_wynikow&gt;/&lt;nazwa AOI&gt;/</code>.</li>
+</ol>
+<h3>6.2. Skrypt Python</h3>
+<pre><code>pip install earthengine-api geopandas rasterio pyogrio shapely scipy matplotlib pillow imageio imageio-ffmpeg tqdm
+earthengine authenticate
+
+python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE
+
+# dowolne ustawienie można nadpisać (wartość w formacie JSON)
+python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE \
+    --ustaw animacje.miesieczna=false --ustaw presje.skala_m=960 --ustaw bufory_m=[2000,5000]</code></pre>
+<p>Plik <code>zanieczyszczenie_swiatlem.py</code> ma format Jupytext (komórki <code># %%</code>), więc można go także otworzyć jako notatnik. Kod wyjścia 2 oznacza, że jakiś moduł przerwał się błędem; raport i pozostałe wyniki są zapisane.</p>
+<h3>6.3. Najważniejsze ustawienia</h3>
+<table>
+<thead><tr><th>Klucz</th><th>Domyślnie</th><th>Znaczenie</th></tr></thead>
+<tbody>
+<tr><td><code>aoi_gpkg</code>, <code>aoi_warstwa</code></td><td>(ścieżka), pierwsza warstwa</td><td>Zakres pracy: plik i warstwa GPKG.</td></tr>
+<tr><td><code>aoi_kolumna_typu</code></td><td><code>None</code></td><td>Opcjonalny podział AOI na dwie części według atrybutu.</td></tr>
+<tr><td><code>presja_promien_m</code></td><td>5000</td><td>Promień pierścienia presji wokół AOI.</td></tr>
+<tr><td><code>presje.skala_m</code></td><td>480</td><td>Siatka VIIRS i gHM (wielokrotność 30 m).</td></tr>
+<tr><td><code>presje.viirs_lata</code></td><td>(2014, 2026)</td><td>Lata do analizy; lata bez miesięcy w kolekcji są pomijane.</td></tr>
+<tr><td><code>presje.natura.zrodlo_zmian</code></td><td><code>auto</code></td><td>Źródło map pokrycia: <code>auto</code>, <code>rf_geotiff</code> lub <code>dw</code>.</td></tr>
+<tr><td><code>pobieranie.*</code></td><td>GeoTIFF włączony</td><td>Zapis warstw, miesięczne VIIRS, tło S2, przycięcie do stref, ZIP, równoległość.</td></tr>
+<tr><td><code>kafel_px</code>, <code>watki</code></td><td>512, 8</td><td>Wydajność pobierania; przy błędach pamięci GEE zmniejsz kafel do 256.</td></tr>
+</tbody>
+</table>
+
+<h2 id="wyniki">7. Co powstaje w folderze wyników</h2>
+<table>
+<thead><tr><th>Folder</th><th>Zawartość</th></tr></thead>
+<tbody>
+<tr><td><code>01_tabele</code></td><td>Roczna i miesięczna radiancja w strefach, trend Theila-Sena i Manna-Kendalla, gHM, udział Natura 2000, zmiany pokrycia terenu w sieci i poza nią, manifest pobranych plików.</td></tr>
+<tr><td><code>02_ryciny</code></td><td>Panel światła nocą (mapy, szeregi, trend), mapa cieplna lat × miesięcy, gHM, mapa i wykres Natura 2000.</td></tr>
+<tr><td><code>03_animacje</code></td><td>Animacja roczna i (opcjonalnie) miesięczna światła nocą, GIF i MP4.</td></tr>
+<tr><td><code>04_rastry</code></td><td>GeoTIFF: VIIRS roczne i miesięczne, liczba obserwacji, gHM, Natura 2000, strefy analizy, tło Sentinel-2, mapy Dynamic World.</td></tr>
+<tr><td><code>05_wektory</code>, <code>06_raport</code></td><td>Strefy (GPKG); parametry biegu (JSON) i opis źródeł oraz ograniczeń (Markdown).</td></tr>
+</tbody>
+</table>
+
+<h2 id="literatura">8. Literatura</h2>
+<ol class="ref">
+<li id="r1">T. Ściężor <i>et al.</i>, „Ecological Light Pollution (ELP) Scale as a Measure of Light Pollution Impact on Protected Areas: Case Study of Poland,” <i>Sustainability</i>, vol. 17, no. 11, art. 4824, 2025, doi: <a href="https://doi.org/10.3390/su17114824">10.3390/su17114824</a>.</li>
+<li id="r2">C. D. Elvidge, K. Baugh, M. Zhizhin, F.-C. Hsu, T. Ghosh, „VIIRS night-time lights,” <i>Int. J. Remote Sens.</i>, 2017, doi: <a href="https://doi.org/10.1080/01431161.2017.1342050">10.1080/01431161.2017.1342050</a>.</li>
+<li id="r3">C. D. Elvidge, M. Zhizhin, T. Ghosh, F.-C. Hsu, J. Taneja, „Annual time series of global VIIRS nighttime lights derived from monthly averages: 2012 to 2019,” <i>Remote Sens.</i>, 2021, doi: <a href="https://doi.org/10.3390/rs13050922">10.3390/rs13050922</a>.</li>
+<li id="r4">K. J. Gaston, J. Bennie, T. W. Davies, J. Hopkins, „The ecological impacts of nighttime light pollution: a mechanistic appraisal,” <i>Biol. Rev.</i>, 2013, doi: <a href="https://doi.org/10.1111/brv.12036">10.1111/brv.12036</a>.</li>
+<li id="r5">F. Hölker <i>et al.</i>, „The dark side of light: a transdisciplinary research agenda for light pollution policy,” <i>Ecol. Soc.</i>, 2010, doi: <a href="https://doi.org/10.5751/ES-03685-150413">10.5751/ES-03685-150413</a>.</li>
+<li id="r6">F. Falchi <i>et al.</i>, „The new world atlas of artificial night sky brightness,” <i>Sci. Adv.</i>, 2016, doi: <a href="https://doi.org/10.1126/sciadv.1600377">10.1126/sciadv.1600377</a>.</li>
+<li id="r7">C. C. M. Kyba <i>et al.</i>, „Artificially lit surface of Earth at night increasing in radiance and extent,” <i>Sci. Adv.</i>, 2017, doi: <a href="https://doi.org/10.1126/sciadv.1701528">10.1126/sciadv.1701528</a>.</li>
+<li id="r8">J. K. Garrett, P. F. Donald, K. J. Gaston, „Skyglow extends into the world's Key Biodiversity Areas,” <i>Anim. Conserv.</i>, 2019, doi: <a href="https://doi.org/10.1111/acv.12480">10.1111/acv.12480</a>.</li>
+<li id="r9">K. J. Gaston, J. P. Duffy, J. Bennie, „Quantifying the erosion of natural darkness in the global protected area system,” <i>Conserv. Biol.</i>, 2015, doi: <a href="https://doi.org/10.1111/cobi.12462">10.1111/cobi.12462</a>.</li>
+<li id="r10">C. M. Kennedy <i>et al.</i>, „Managing the middle: a shift in conservation priorities based on the global human modification gradient,” <i>Glob. Change Biol.</i>, 2019, doi: <a href="https://doi.org/10.1111/gcb.14549">10.1111/gcb.14549</a>.</li>
+<li id="r11">D. M. Theobald <i>et al.</i>, „Earth transformed: detailed mapping of global human modification from 1990 to 2017,” <i>Earth Syst. Sci. Data</i>, 2020, doi: <a href="https://doi.org/10.5194/essd-12-1953-2020">10.5194/essd-12-1953-2020</a>.</li>
+<li id="r12">C. F. Brown <i>et al.</i>, „Dynamic World, near real-time global 10 m land use land cover mapping,” <i>Sci. Data</i>, 2022, doi: <a href="https://doi.org/10.1038/s41597-022-01307-4">10.1038/s41597-022-01307-4</a>.</li>
+<li id="r13">V. J. Pasquarella, C. F. Brown, W. Czerwinski, W. J. Rucklidge, „Comprehensive quality assessment of optical satellite imagery using weakly supervised video learning,” in <i>Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. Workshops (CVPRW)</i>, 2023, pp. 2125-2135.</li>
+<li id="r14">P. K. Sen, „Estimates of the regression coefficient based on Kendall's tau,” <i>J. Am. Stat. Assoc.</i>, 1968, doi: <a href="https://doi.org/10.1080/01621459.1968.10480934">10.1080/01621459.1968.10480934</a>.</li>
+<li id="r15">H. B. Mann, „Nonparametric tests against trend,” <i>Econometrica</i>, 1945, doi: <a href="https://doi.org/10.2307/1907187">10.2307/1907187</a>.</li>
+<li id="r16">L. Joppa, A. Pfaff, „High and far: biases in the location of protected areas,” <i>PLoS ONE</i>, 2009, doi: <a href="https://doi.org/10.1371/journal.pone.0008273">10.1371/journal.pone.0008273</a>.</li>
+<li id="r17">K. S. Andam, P. J. Ferraro, A. Pfaff, G. A. Sanchez-Azofeifa, J. A. Robalino, „Measuring the effectiveness of protected area networks in reducing deforestation,” <i>Proc. Natl. Acad. Sci. USA</i>, 2008, doi: <a href="https://doi.org/10.1073/pnas.0800437105">10.1073/pnas.0800437105</a>.</li>
+<li id="r18">K. H. Hamed, A. R. Rao, „A modified Mann-Kendall trend test for autocorrelated data,” <i>J. Hydrol.</i>, 1998, doi: <a href="https://doi.org/10.1016/S0022-1694(97)00125-X">10.1016/S0022-1694(97)00125-X</a>.</li>
+<li id="r19">S. Yue, P. Pilon, B. Phinney, G. Cavadias, „The influence of autocorrelation on the ability to detect trend in hydrological series,” <i>Hydrol. Process.</i>, 2002, doi: <a href="https://doi.org/10.1002/hyp.1095">10.1002/hyp.1095</a>.</li>
+</ol>
+<p style="font:0.88rem system-ui,sans-serif;color:#556070">Rejestry obszarów chronionych, kolekcje VIIRS, gHM i Dynamic World są opisane w katalogu danych Google Earth Engine pod identyfikatorami z tabeli w sekcji 2; opis zbioru VIIRS VCMSLCFG podaje ograniczenia wersji 1 cytowane w sekcji 4.2.</p>
+
+</main>
+
+<footer>
+  <div class="w">
+    <p>Autor: Grzegorz Górniak. Kod: licencja MIT. Strona opisuje wersję 1.0.0; źródła, wydanie i archiwum Zenodo są wskazane w <a href="https://github.com/gorniakgrzegorz/zanieczyszczenie_swiatlem">repozytorium</a>. Dane źródłowe (VIIRS, gHM, WDPA, Sentinel-2, Dynamic World) podlegają licencjom dostawców i nie są redystrybuowane.</p>
+  </div>
+</footer>
+
+</body>
+</html>

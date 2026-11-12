@@ -1,0 +1,13 @@
+{
+  "title": "zanieczyszczenie_swiatlem: bulk Google Earth Engine download and assessment of external pressures (night-time light, human modification, Natura 2000) for any area from a GPKG file",
+  "upload_type": "software",
+  "creators": [{"name": "Górniak, Grzegorz"}],
+  "description": "Notatnik Google Colab i skrypt Python do masowego pobierania z Google Earth Engine i oceny presji zewnętrznych na dowolny obszar z pliku GeoPackage: sztuczne światło nocą (VIIRS DNB, mediany roczne i kompozyty miesięczne, trend Theila-Sena i test Manna-Kendalla), globalna modyfikacja przez człowieka (gHM) i obszary Natura 2000 (WDPA) wraz z porównaniem zmian pokrycia terenu wewnątrz i na zewnątrz sieci. Wyniki: GeoTIFF, tabele, ryciny, animacje. Testowano na syntetycznym zastępniku GEE, nie na danych rzeczywistych. / Google Colab notebook and Python script for bulk download from Google Earth Engine and assessment of external pressures on any area from a GeoPackage file: night-time light (VIIRS DNB annual medians and monthly composites, Theil-Sen slope and Mann-Kendall test), global human modification (gHM) and Natura 2000 sites (WDPA), with a descriptive comparison of land-cover change inside and outside the network. Outputs: GeoTIFF, tables, figures, animations. Tested against a synthetic stand-in for GEE, not against real data.",
+  "access_right": "open",
+  "license": "mit",
+  "keywords": ["light pollution", "VIIRS DNB", "Natura 2000", "global human modification", "Google Earth Engine", "protected areas"],
+  "language": "pol",
+  "related_identifiers": [
+    {"identifier": "https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/", "relation": "isDocumentedBy", "scheme": "url"}
+  ]
+}
