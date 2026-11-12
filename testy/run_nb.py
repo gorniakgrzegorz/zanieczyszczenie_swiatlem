@@ -1,6 +1,10 @@
 import sys, os, json, time, re
 os.environ['MPLBACKEND'] = 'Agg'; os.environ['NOTATNIK_TEST'] = '1'
 nbp, tmp, scen = sys.argv[1], sys.argv[2], sys.argv[3]
+if os.path.exists(os.path.join(tmp, 'center.txt')):
+    _crs, _cx, _cy = open(os.path.join(tmp, 'center.txt')).read().split(); os.environ.update(T_CRS=_crs, T_CX=_cx, T_CY=_cy)
+if 'nowdpa' in scen:
+    os.environ['T_NOWDPA'] = '1'
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stub'))
 import warnings; warnings.filterwarnings('ignore')
 nb = json.load(open(nbp, encoding='utf-8'))
@@ -13,7 +17,9 @@ for i, k in enumerate(kody):
         U['kafel_px'] = 512
         if scen == 'dw_zip':
             U['pobieranie']['zip'] = True; U['pobieranie']['przytnij_do_stref'] = True; U['presje']['natura']['zrodlo_zmian'] = 'dw'
-        if scen.startswith('szybki'):
+        if 'podzial' in scen:
+            U['aoi_kolumna_typu'] = 'nazwa'
+        if scen.startswith('szybki') or 'podzial' in scen or 'nowdpa' in scen:
             U['animacje']['miesieczna'] = False
     if i == 4 and scen.startswith('rf'):                    # po komórce AOI: sztuczny plik RF z notatnika głównego na tej samej siatce
         pass

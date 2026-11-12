@@ -63,13 +63,15 @@ def _getinfo(z):
                 ts.append(int(datetime.datetime(y, m, 15).timestamp() * 1000))
         return ts
     if 'FeatureCollection' in z._chain:
+        if os.environ.get('T_NOWDPA'):
+            return {'features': []}
         import geopandas as gpd
         from shapely.geometry import Polygon
         specs = [('Special Area of Conservation (Habitats Directive)', _poly(2500, -3000, 2000), 'SOO test'),
                  ('Special Protection Area (Birds Directive)', _poly(3000, 4000, -3000), 'OSO test'),
                  ('Nature Reserve', _poly(700, 0, 0), 'Rezerwat test')]
         g = gpd.GeoDataFrame({'NAME': [s[2] for s in specs], 'DESIG': ['x'] * 3, 'DESIG_ENG': [s[0] for s in specs], 'WDPAID': [1, 2, 3], 'STATUS_YR': [2004, 2004, 1990], 'REP_AREA': [1.0, 2.0, 3.0]},
-                             geometry=[Polygon(s[1]) for s in specs], crs='EPSG:2180').to_crs(4326)
+                             geometry=[Polygon(s[1]) for s in specs], crs=os.environ.get('T_CRS', 'EPSG:2180')).to_crs(4326)
         return json.loads(g.to_json())
     return 1
 
@@ -105,9 +107,9 @@ class data:
             elif b == 'ghm':
                 out[b] = np.round((0.25 + 0.7 * np.exp(-(d_city / 6000) ** 2) + 0.2 * (d_park > 7000)) * 1000).clip(0, 1000)
             elif b == 'sac':
-                out[b] = (np.hypot(X - (CX - 3000), Y - (CY + 2000)) < 2500).astype(float)
+                out[b] = 0 * X if os.environ.get('T_NOWDPA') else (np.hypot(X - (CX - 3000), Y - (CY + 2000)) < 2500).astype(float)
             elif b == 'spa':
-                out[b] = (np.hypot(X - (CX + 4000), Y - (CY - 3000)) < 3000).astype(float)
+                out[b] = 0 * X if os.environ.get('T_NOWDPA') else (np.hypot(X - (CX + 4000), Y - (CY - 3000)) < 3000).astype(float)
             elif b.startswith('dw_'):
                 yr = int(b[3:]); lab = np.full((h, w), 2.0)       # trawy
                 lab[d_park < 6500] = 1                              # las
