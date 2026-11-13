@@ -8,7 +8,7 @@ The analysis runs in a SEPARATE Python process with its own set of libraries ("l
 import os
 import sys
 import shutil
-import subprocess
+import subprocess  # nosec B404
 
 PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 ENGINE = os.path.join(PLUGIN_DIR, 'engine', 'night_light.py')
@@ -30,7 +30,7 @@ def libs_dir(settings_dir):
 def _run_ok(exe, timeout=20):
     """Czy exe to działający Python 3.9+ (zwraca wersję lub None)."""
     try:
-        r = subprocess.run([exe, '-c', 'import sys; print("%d.%d" % sys.version_info[:2])'], capture_output=True, text=True, timeout=timeout,
+        r = subprocess.run([exe, '-c', 'import sys; print("%d.%d" % sys.version_info[:2])'], capture_output=True, text=True, timeout=timeout,  # nosec B603
                            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         if r.returncode != 0:
             return None

@@ -5,15 +5,15 @@ import os
 import re
 import glob
 import json
-import time
 import datetime
 import pathlib
+import logging
 
 from qgis.PyQt.QtCore import Qt, QUrl
 from qgis.PyQt.QtGui import QDesktopServices, QGuiApplication, QTextCursor
 from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QGridLayout, QTabWidget, QWidget, QLabel, QPushButton, QLineEdit, QComboBox,
                                  QCheckBox, QRadioButton, QSpinBox, QGroupBox, QProgressBar, QPlainTextEdit, QTextBrowser, QTreeWidget, QTreeWidgetItem,
-                                 QFileDialog, QMessageBox, QScrollArea, QFrame, QSizePolicy)
+                                 QFileDialog, QMessageBox, QScrollArea, QFrame)
 from qgis.core import QgsApplication, QgsProject, QgsSettings
 
 from . import runner
@@ -21,7 +21,8 @@ from .jobs import ProcJob
 from .i18n import tr
 from .help_content import help_html, gee_html
 
-VERSION = '1.0.0'
+LOG = logging.getLogger(__name__)
+VERSION = '1.0.1'
 KEY = 'zanieczyszczenie_swiatla_nocnego/'
 OK, BAD, UNK = '✔', '✘', '○'      # ✔ ✘ ○
 
@@ -37,15 +38,20 @@ def default_lang():
 
 
 def is_polygon_layer(layer):
+    """Czy warstwa jest powierzchniowa (QGIS 3.30+ i 4: Qgis.GeometryType, starsze: QgsWkbTypes)."""
     try:
         from qgis.core import Qgis
-        return layer.geometryType() == Qgis.GeometryType.Polygon
-    except Exception:
-        pass
-    try:
+        kind = Qgis.GeometryType.Polygon
+    except (ImportError, AttributeError):
         from qgis.core import QgsWkbTypes
-        return layer.geometryType() == QgsWkbTypes.PolygonGeometry
-    except Exception:
+        try:
+            kind = QgsWkbTypes.GeometryType.PolygonGeometry      # zakres enumeracji (PyQGIS 3.30+)
+        except AttributeError:
+            kind = QgsWkbTypes.PolygonGeometry                   # stare QGIS 3.22-3.28
+    try:
+        return layer.geometryType() == kind
+    except (AttributeError, RuntimeError) as e:
+        LOG.debug('geometryType: %s', e)
         return False
 
 
@@ -480,8 +486,8 @@ class NightLightDialog(QDialog):
             try:
                 if isinstance(layer, QgsVectorLayer) and is_polygon_layer(layer):
                     self.cb_layer.addItem(layer.name(), lid)
-            except Exception:
-                continue
+            except (AttributeError, RuntimeError) as e:
+                LOG.debug('pominięto warstwę %s: %s', lid, e)
         i = self.cb_layer.findData(cur) if cur else -1
         if i >= 0:
             self.cb_layer.setCurrentIndex(i)
@@ -876,5 +882,5 @@ class NightLightDialog(QDialog):
         self.status.setText(self.t('layers_added', n=added))
         try:
             self.iface.mapCanvas().refresh()
-        except Exception:
-            pass
+        except (AttributeError, RuntimeError) as e:
+            LOG.debug('mapCanvas.refresh: %s', e)

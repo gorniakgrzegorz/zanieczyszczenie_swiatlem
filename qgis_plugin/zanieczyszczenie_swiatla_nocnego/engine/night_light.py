@@ -290,7 +290,7 @@ def _cache_key(img, bands, grid, name):
         desc = img.serialize()          # cały graf obliczeń GEE: zmiana kolekcji lub parametru unieważnia pamięć podręczną
     except Exception:
         desc = repr(img)
-    return hashlib.md5(json.dumps([name, bands, grid, CRS, desc], sort_keys=True, default=str).encode()).hexdigest()[:10]
+    return hashlib.sha256(json.dumps([name, bands, grid, CRS, desc], sort_keys=True, default=str).encode()).hexdigest()[:10]
 
 
 def download(img, bands, grid, name, dtype=None, tile=None, threads=None, show=False):
@@ -459,8 +459,8 @@ def save_fig(fig, name):
         try:
             fig.tight_layout(rect=(0, 0, 1, 0.95))
             fig._suptitle.set_y(0.995)
-        except Exception:
-            pass
+        except (ValueError, RuntimeError, AttributeError) as e:
+            say(f'  tight_layout: {e}')
     p = os.path.join(DIR_FIG, f'{NAME}_{name}.png')
     fig.savefig(p, dpi=int(C['dpi']), bbox_inches='tight', facecolor='white')
     plt.close(fig)

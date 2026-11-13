@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Punkt wejścia wtyczki: menu, pasek narzędzi, okno. / Plugin entry point: menu, toolbar, dialog."""
 import os
+import logging
 
 from qgis.PyQt.QtGui import QIcon
 try:
@@ -8,6 +9,7 @@ try:
 except ImportError:
     from qgis.PyQt.QtWidgets import QAction      # Qt5 / QGIS 3
 
+LOG = logging.getLogger(__name__)
 NAME = 'Zanieczyszczenie światłem nocnym / Night-time Light Pollution'
 
 
@@ -35,8 +37,8 @@ class NightLightPlugin:
             try:
                 if self.dialog.job is not None and self.dialog.job.running():
                     self.dialog.job.kill()
-            except Exception:
-                pass
+            except (AttributeError, RuntimeError) as e:
+                LOG.debug('zatrzymanie procesu przy wyładowaniu: %s', e)
             self.dialog.close()
             self.dialog.deleteLater()
             self.dialog = None

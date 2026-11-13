@@ -3,11 +3,11 @@ import os, shutil
 from PyQt5.QtCore import QSettings
 
 class Qgis:
-    class GeometryType:
-        Polygon = 2
+    pass
 
 class QgsWkbTypes:
-    PolygonGeometry = 2
+    class GeometryType:
+        PolygonGeometry = 2
 
 class QgsApplication:
     @staticmethod
