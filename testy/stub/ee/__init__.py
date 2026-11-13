@@ -125,3 +125,9 @@ class data:
                 raise RuntimeError(f'Image has no band named {b}')
         return out
 import re
+
+
+class Number:
+    def __init__(self, v): self.v = v
+    def add(self, o): return Number(self.v + o)
+    def getInfo(self): return self.v

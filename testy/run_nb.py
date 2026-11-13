@@ -13,7 +13,7 @@ ns = {'__name__': '__main__'}
 t0 = time.time()
 for i, k in enumerate(kody):
     if i == 1:                                              # po ustawieniach: nadpisanie ścieżek i wydajności na potrzeby testu
-        U = ns['USTAWIENIA']; U['aoi_gpkg'] = os.path.join(tmp, 'AOI.gpkg'); U['folder_wynikow'] = os.path.join(tmp, 'Wyniki'); U['dpi'] = 80; U['watki'] = 4
+        U = ns['USTAWIENIA']; U['aoi_gpkg'] = os.path.join(tmp, 'AOI.gpkg'); U['projekt_gee'] = 'test'; U['folder_wynikow'] = os.path.join(tmp, 'Wyniki'); U['dpi'] = 80; U['watki'] = 4
         U['kafel_px'] = 512
         if scen == 'dw_zip':
             U['pobieranie']['zip'] = True; U['pobieranie']['przytnij_do_stref'] = True; U['presje']['natura']['zrodlo_zmian'] = 'dw'

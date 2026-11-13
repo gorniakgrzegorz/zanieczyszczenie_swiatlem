@@ -3,15 +3,21 @@
 Sztuczne światło nocą (VIIRS DNB), globalna modyfikacja przez człowieka (gHM) i obszary Natura 2000 (WDPA)
 dla zakresu pracy wskazanego plikiem GeoPackage. Masowe pobieranie z Google Earth Engine, GeoTIFF, tabele, ryciny, animacje.
 
-Użycie:
-    python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE
-    python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --ustaw animacje.miesieczna=false --ustaw presje.skala_m=960
+Co wpisać przed uruchomieniem: w sekcji "USTAWIENIA DO WPISANIA" poniżej trzy pola WYMAGANE (PROJEKT_GEE, PLIK_GPKG, FOLDER_WYNIKOW);
+resztę ustawień można zostawić. Te same pola można podać w wierszu poleceń, bez edycji pliku.
 
-Ustawienia domyślne są w słowniku USTAWIENIA poniżej; opcja --ustaw klucz.podklucz=WARTOŚĆ (JSON) nadpisuje dowolne z nich.
+Użycie:
+    python zanieczyszczenie_swiatlem.py --projekt MOJ_PROJEKT_GEE --gpkg obszar.gpkg --out wyniki
+    python zanieczyszczenie_swiatlem.py --tylko-sprawdz            # sprawdza ustawienia i połączenie z GEE, niczego nie pobiera
+    python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --ustaw animacje.miesieczna=false --ustaw presje.skala_m=960
+
+Pierwsze logowanie: earthengine authenticate (albo skrypt sam poprosi o zalogowanie). Projekt GEE można też podać zmienną środowiskową GEE_PROJECT.
+Ustawienia pozostałe są w słowniku USTAWIENIA; opcja --ustaw klucz.podklucz=WARTOŚĆ (JSON) nadpisuje dowolne z nich.
 Plik ma format Jupytext (komórki "# %%"), więc można go też otworzyć jako notatnik (VS Code, Jupyter, Colab).
 """
 import matplotlib
 matplotlib.use("Agg")   # bez okien: ryciny trafiają tylko do plików
+import os
 
 # %% [markdown]
 # # Presje zewnętrzne na dowolny obszar z pliku GPKG: sztuczne światło nocą, modyfikacja przez człowieka i obszary Natura 2000
@@ -19,6 +25,10 @@ matplotlib.use("Agg")   # bez okien: ryciny trafiają tylko do plików
 # Samodzielny notatnik (odpowiada sekcji 35 notatnika głównego „Pokrycie terenu AOI RF DW”). Zakresem pracy jest dowolny obszar z pliku GeoPackage (park, gmina, zlewnia, pole badań, także kilka obiektów naraz; nie musi to być park krajobrazowy). Notatnik **masowo pobiera z Google Earth Engine** zdjęcia i warstwy dla tego obszaru (VIIRS DNB: roczne mediany i wszystkie miesięczne kompozyty, Global Human Modification, obszary Natura 2000 z WDPA, tło Sentinel-2) i zapisuje je jako GeoTIFF. Następnie liczy tabele, trendy, ryciny i animacje.
 #
 # **Jak uruchomić.** Edytuj tylko komórkę z ustawieniami (sekcja 1): na górze jest zakres pracy (plik GPKG, `aoi_gpkg`) i folder wyników. Zakres to suma wszystkich obiektów wskazanej warstwy; podział na dwie części (np. park i otulina) jest opcjonalny. Potem uruchom wszystkie komórki. Błąd jednego modułu jest zapisywany w raporcie, a notatnik liczy dalej. Pobrane obrazy trafiają do pamięci podręcznej (`_cache`), więc ponowne uruchomienie po przerwaniu nie pobiera ich od nowa.
+#
+# **Pierwszy raz i bez wiedzy informatycznej?** Przewodnik krok po kroku (konto Google, własny projekt Google Earth Engine, plik z obszarem, uruchomienie w Colabie): https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/#przewodnik
+#
+# **W wersji skryptowej** trzy pola wymagane (PROJEKT_GEE, PLIK_GPKG, FOLDER_WYNIKOW) są na górze, w sekcji USTAWIENIA DO WPISANIA; można je też podać w wierszu poleceń (--projekt, --gpkg, --out). Opcja --tylko-sprawdz testuje ustawienia i połączenie z Earth Engine bez pobierania.
 
 # %% [markdown]
 # ## 1. Ustawienia
@@ -26,29 +36,49 @@ matplotlib.use("Agg")   # bez okien: ryciny trafiają tylko do plików
 # Jedyna komórka do edycji. Pierwszy blok to zakres pracy: plik GPKG z dowolnym obszarem i folder wyników. Dalej: Google Earth Engine, parametry presji (kolekcje, lata, skala, porównanie w Natura 2000), masowe pobieranie, tło map, animacje i wydajność.
 
 # %%
+# ============================================================================================
+# USTAWIENIA DO WPISANIA
+# ============================================================================================
+# --- WYMAGANE: bez tych trzech pól skrypt się zatrzyma z komunikatem (przed pobieraniem) ---
+PROJEKT_GEE = os.environ.get('GEE_PROJECT', 'TWOJ-PROJEKT-GEE')   # identyfikator projektu Google Cloud z włączonym Earth Engine
+                                                                    # (https://console.cloud.google.com/earth-engine/configuration)
+PLIK_GPKG = 'obszar.gpkg'            # plik GeoPackage z zakresem pracy: dowolny obszar (suma wszystkich obiektów warstwy), z nadanym układem współrzędnych
+FOLDER_WYNIKOW = 'wyniki'            # folder wyników; w nim powstanie folder <nazwa obszaru> z 01_tabele ... 06_raport
+
+# --- OPCJONALNE (najczęściej zmieniane; None lub wartość domyślna wystarczą) ---
+WARSTWA_GPKG = None                  # nazwa warstwy w pliku GPKG; None = pierwsza warstwa
+NAZWA_OBSZARU = None                 # nazwa w tytułach rycin i plikach wyników; None = nazwa pliku GPKG
+PROMIEN_PRESJI_M = 5000              # promień pierścienia wokół obszaru (otoczenie, z którego dociera rozproszone światło), w metrach
+LATA_VIIRS = (2014, 2026)            # zakres lat VIIRS; niepełny rok bieżący warto wyłączyć (np. (2014, 2025))
+# Reszta (skala siatki, źródło map pokrycia terenu dla Natura 2000, tło Sentinel-2, animacje, równoległość, ZIP) jest w słowniku USTAWIENIA poniżej
+# albo w wierszu poleceń: --ustaw klucz.podklucz=WARTOŚĆ.
+
+# %%
+# WYMAGANE (wpisz przed uruchomieniem): 'aoi_gpkg' (plik GPKG), 'folder_wynikow' (gdzie zapisać wyniki) i 'projekt_gee' (identyfikator projektu Google Cloud z włączonym Earth Engine).
+# Pozostałe ustawienia mają sensowne wartości domyślne.
 USTAWIENIA = {
     # ============ 1. ZAKRES PRACY (plik GPKG, dowolny obszar) ============
     # Zakres pracy (AOI) = suma wszystkich obiektów wskazanej warstwy pliku GPKG. Może to być dowolny obszar: park, gmina, zlewnia, pole badań,
     # także kilka rozłącznych obiektów. Plik nie wymaga żadnego szczególnego przygotowania; potrzebny jest tylko układ współrzędnych (CRS).
-    'aoi_gpkg': '/content/drive/MyDrive/GWPK/AOI.gpkg',
-    'aoi_warstwa': None,                 # None = pierwsza warstwa pliku
-    'nazwa': None,                       # nazwa obszaru w tytułach rycin i plikach wyników; None = nazwa pliku GPKG
+    'aoi_gpkg': PLIK_GPKG,
+    'aoi_warstwa': WARSTWA_GPKG,                 # None = pierwsza warstwa pliku
+    'nazwa': NAZWA_OBSZARU,                       # nazwa obszaru w tytułach rycin i plikach wyników; None = nazwa pliku GPKG
     # Opcjonalny podział zakresu na dwie części do osobnych tabel i granic na mapach (np. park i otulina, jądro i strefa buforowa).
     # None = bez podziału (domyślnie). Gdy podano kolumnę atrybutu, obiekty, których wartość zawiera podany tekst, tworzą część dodatkową.
     'aoi_kolumna_typu': None, 'aoi_wartosc_czesci_dodatkowej': 'otulin', 'aoi_nazwy_czesci': ('część główna', 'część dodatkowa'),
-    'bufory_m': [5000],                  # pierścienie wokół AOI (porównanie z otoczeniem)
+    'bufory_m': [PROMIEN_PRESJI_M],                  # pierścienie wokół AOI (porównanie z otoczeniem)
     'ramka_m': 500,                      # margines mapy wokół obszaru (kontekst na rycinach)
-    'presja_promien_m': 5000,            # promień pierścienia presji (ramka mapy jest powiększana do tego promienia)
-    'folder_wynikow': '/content/drive/MyDrive/GWPK/Wyniki',   # w nim folder <nazwa AOI> z podfolderami 01_tabele ... 06_raport
+    'presja_promien_m': PROMIEN_PRESJI_M,            # promień pierścienia presji (ramka mapy jest powiększana do tego promienia)
+    'folder_wynikow': FOLDER_WYNIKOW,   # w nim folder <nazwa AOI> z podfolderami 01_tabele ... 06_raport
 
     # ============ 2. GOOGLE EARTH ENGINE ============
-    'projekt_gee': 'rf-environment-monitoring',
+    'projekt_gee': PROJEKT_GEE,    # WYMAGANE: identyfikator projektu Google Cloud z włączonym Earth Engine (https://console.cloud.google.com/earth-engine/configuration)
 
     # ============ 3. DANE I ANALIZA PRESJI ZEWNĘTRZNYCH ============
     'presje': {
         'wlacz': True,
         'skala_m': 480,                  # siatka VIIRS i gHM: wielokrotność 30 m (480 m = 16 pikseli 30 m; natywnie około 460 m)
-        'viirs': 'NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG', 'viirs_lata': (2014, 2026),   # lata bez żadnego miesiąca w kolekcji są pomijane
+        'viirs': 'NOAA/VIIRS/DNB/MONTHLY_V1/VCMSLCFG', 'viirs_lata': LATA_VIIRS,   # lata bez żadnego miesiąca w kolekcji są pomijane
         'progi_radiancji': [],           # brak zweryfikowanego progu ekologicznego radiancji; ewentualne progi tylko jako umowne
         'ghm': 'CSP/HM/GlobalHumanModification',
         'wdpa': 'WCMC/WDPA/current/polygons',     # do publikacji wersja datowana: WCMC/WDPA/RRRRMM/polygons
@@ -96,15 +126,16 @@ USTAWIENIA = {
 # %%
 import argparse, json as _json, sys as _sys
 _ap = argparse.ArgumentParser(description='Presje zewnętrzne na dowolny obszar z GPKG (światło nocą, gHM, Natura 2000).')
-_ap.add_argument('--gpkg', help='plik GeoPackage z zakresem pracy (nadpisuje aoi_gpkg)')
+_ap.add_argument('--projekt', help='identyfikator projektu Google Earth Engine (WYMAGANE, jeśli nie wpisano PROJEKT_GEE ani GEE_PROJECT)')
+_ap.add_argument('--gpkg', help='plik GeoPackage z zakresem pracy (nadpisuje PLIK_GPKG)')
+_ap.add_argument('--out', help='folder wyników (nadpisuje FOLDER_WYNIKOW)')
 _ap.add_argument('--warstwa', help='warstwa w pliku GPKG (domyślnie pierwsza)')
 _ap.add_argument('--nazwa', help='nazwa obszaru w tytułach i plikach wyników')
-_ap.add_argument('--out', help='folder wyników (nadpisuje folder_wynikow)')
-_ap.add_argument('--projekt', help='identyfikator projektu Google Earth Engine (nadpisuje projekt_gee)')
 _ap.add_argument('--ustaw', action='append', default=[], metavar='KLUCZ.PODKLUCZ=JSON',
                  help='dowolne ustawienie, np. animacje.miesieczna=false, presje.skala_m=960, bufory_m=[2000,5000]; można powtarzać')
+_ap.add_argument('--tylko-sprawdz', action='store_true', help='sprawdź ustawienia i połączenie z Earth Engine, po czym zakończ (nic nie jest pobierane)')
 _arg, _ = _ap.parse_known_args()
-for _k, _v in (('aoi_gpkg', _arg.gpkg), ('aoi_warstwa', _arg.warstwa), ('nazwa', _arg.nazwa), ('folder_wynikow', _arg.out), ('projekt_gee', _arg.projekt)):
+for _k, _v in (('projekt_gee', _arg.projekt), ('aoi_gpkg', _arg.gpkg), ('folder_wynikow', _arg.out), ('aoi_warstwa', _arg.warstwa), ('nazwa', _arg.nazwa)):
     if _v is not None:
         USTAWIENIA[_k] = _v
 for _u in _arg.ustaw:
@@ -180,12 +211,52 @@ except ModuleNotFoundError:
     pass
 
 U = USTAWIENIA
+
+def sprawdz_ustawienia():
+    """Sprawdza pola wymagane przed logowaniem do GEE i pobieraniem; zatrzymuje bieg z czytelnym komunikatem zamiast błędu w połowie pracy."""
+    bledy = []
+    projekt = str(U.get('projekt_gee') or '').strip()
+    if not projekt or 'TWOJ' in projekt.upper():
+        bledy.append("projekt_gee: wpisz identyfikator projektu Google Cloud z włączonym Earth Engine "
+                     "(https://console.cloud.google.com/earth-engine/configuration; w skrypcie także zmienna środowiskowa GEE_PROJECT lub opcja --projekt).")
+    gpkg = str(U.get('aoi_gpkg') or '')
+    if not gpkg or not os.path.isfile(gpkg):
+        bledy.append(f"aoi_gpkg: nie znaleziono pliku GPKG ({gpkg!r}). Wskaż plik z zakresem pracy (w Colabie sprawdź też, czy Dysk Google jest podłączony).")
+    folder = str(U.get('folder_wynikow') or '')
+    try:
+        os.makedirs(folder, exist_ok=True)
+        _probe = os.path.join(folder, '.zapis_test')
+        open(_probe, 'w').close(); os.remove(_probe)
+    except Exception as e:
+        bledy.append(f"folder_wynikow: brak możliwości zapisu w {folder!r} ({type(e).__name__}).")
+    if bledy:
+        komunikat = 'Popraw ustawienia i uruchom ponownie:\n - ' + '\n - '.join(bledy)
+        if sys.modules.get('ipykernel') is not None:
+            raise ValueError(komunikat)
+        sys.exit('BŁĄD USTAWIEŃ. ' + komunikat)
+    print('Ustawienia: projekt GEE =', projekt, '| AOI =', gpkg, '| wyniki =', folder)
+
+sprawdz_ustawienia()
 try:
     ee.Initialize(project=U['projekt_gee'])
 except Exception:
     ee.Authenticate()
-    ee.Initialize(project=U['projekt_gee'])
+    try:
+        ee.Initialize(project=U['projekt_gee'])
+    except Exception as e:
+        raise RuntimeError(f"Nie udało się połączyć z Earth Engine (projekt {U['projekt_gee']!r}). Sprawdź, czy projekt istnieje, ma włączone Earth Engine API "
+                           f"i czy konto ma do niego dostęp. Szczegóły: {e}") from e
 print('Google Earth Engine:', ee.__version__, '| projekt:', U['projekt_gee'])
+
+# %%
+# opcja --tylko-sprawdz: ustawienia i logowanie już sprawdzone w poprzedniej komórce; test zapytania do Earth Engine i koniec
+if _arg.tylko_sprawdz:
+    try:
+        _odp = ee.Number(1).add(1).getInfo()
+        print('Połączenie z Earth Engine działa (test zapytania: 1 + 1 =', _odp, '). Wszystko gotowe do uruchomienia pełnego biegu.')
+    except Exception as e:
+        raise SystemExit(f'Połączenie z Earth Engine nie działa: {type(e).__name__}: {e}')
+    raise SystemExit(0)
 
 # %% [markdown]
 # ## 3. Zakres pracy (AOI), strefy i siatka analizy

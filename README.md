@@ -2,7 +2,9 @@
 
 Presje zewnętrzne na dowolny obszar z pliku GPKG: sztuczne światło nocą, modyfikacja przez człowieka i obszary Natura 2000.
 
-**Strona z opisem metody i podstawami naukowymi:** https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/
+**Strona z opisem metody, podstawami naukowymi i przewodnikiem dla początkujących:** https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/
+
+**Nigdy nie programowałeś?** Zacznij od [przewodnika krok po kroku](https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/#przewodnik): konto Google, własny projekt Earth Engine, plik z obszarem, Colab.
 
 Dwie wersje tego samego kodu: notatnik `zanieczyszczenie_swiatlem.ipynb` (Colab) i skrypt `zanieczyszczenie_swiatlem.py` (terminal).
 
@@ -16,9 +18,12 @@ Notatnik `zanieczyszczenie_swiatlem.ipynb` (Google Colab, Google Earth Engine) t
 
 ### Skrypt Python (bez notatnika)
 
+Trzy pola wymagane są na górze skryptu (sekcja `USTAWIENIA DO WPISANIA`): `PROJEKT_GEE` (albo zmienna środowiskowa `GEE_PROJECT`), `PLIK_GPKG`, `FOLDER_WYNIKOW`. Można je też podać w wierszu poleceń. Przed pobieraniem skrypt sprawdza ustawienia, a `--tylko-sprawdz` kończy po sprawdzeniu ustawień i połączenia z Earth Engine.
+
 ```bash
 pip install -r requirements.txt
 earthengine authenticate
+python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE --tylko-sprawdz
 python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE
 python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MOJ_PROJEKT_GEE --ustaw animacje.miesieczna=false --ustaw presje.skala_m=960
 ```
