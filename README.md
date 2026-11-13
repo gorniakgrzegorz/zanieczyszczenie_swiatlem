@@ -47,4 +47,4 @@ PYTHONPATH=testy/stub python zanieczyszczenie_swiatlem.py --gpkg /tmp/t/AOI.gpkg
 Test sprawdza przepływ danych, kafle, pamięć podręczną, zapis GeoTIFF, tabele, ryciny i animacje. Nie zastępuje uruchomienia na prawdziwym GEE. Obszary Natura 2000 istnieją tylko w UE, więc dla obszarów spoza UE tabele Natura 2000 są puste (notatnik zapisuje o tym uwagę i liczy dalej).
 
 
-Licencja kodu: MIT (plik `LICENSE`). Dane źródłowe (VIIRS, gHM, WDPA, Sentinel-2, Dynamic World) podlegają licencjom dostawców. Cytowanie: `CITATION.cff` i archiwum Zenodo wydania.
+Licencja kodu: MIT (plik `LICENSE`). Dane źródłowe (VIIRS, gHM, WDPA, Sentinel-2, Dynamic World) podlegają licencjom dostawców. Cytowanie: `CITATION.cff`; archiwum wydania v1.0.0 w Zenodo: https://doi.org/10.5281/zenodo.24186500

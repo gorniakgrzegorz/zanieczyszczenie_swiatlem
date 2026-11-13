@@ -4,6 +4,7 @@ title: "zanieczyszczenie_swiatlem: masowe pobieranie z Google Earth Engine i oce
 version: 1.0.0
 date-released: 2026-11-12
 license: MIT
+doi: 10.5281/zenodo.24186500
 repository-code: "https://github.com/gorniakgrzegorz/zanieczyszczenie_swiatlem"
 url: "https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/"
 authors:
