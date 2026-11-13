@@ -30,6 +30,14 @@ python zanieczyszczenie_swiatlem.py --gpkg obszar.gpkg --out wyniki --projekt MO
 
 Opcja `--ustaw klucz.podklucz=WARTOŚĆ` (JSON) nadpisuje dowolne ustawienie ze słownika `USTAWIENIA`. Kod wyjścia 2 oznacza błąd któregoś modułu (raport i reszta wyników są zapisane).
 
+## Wtyczka do QGIS: „Zanieczyszczenie światłem nocnym” (Night-time Light Pollution)
+
+Wersja z interfejsem graficznym (polski i angielski), tylko dla światła nocnego (VIIRS): jasność roczna i miesięczna, trend Theila-Sena, sezonowość, mapy, animacje, GeoTIFF i raport metodyczny. Obszar wskazuje się warstwą poligonową z projektu QGIS albo plikiem. Wtyczka sama instaluje potrzebne biblioteki Pythona do osobnego folderu (nie zmienia instalacji QGIS) i ma w zakładce „Dostęp do GEE” instrukcję krok po kroku, jak założyć projekt Google Cloud i uzyskać dostęp do Earth Engine.
+
+- Instalacja: pobierz `qgis_plugin/zanieczyszczenie_swiatla_nocnego-1.0.0.zip`, w QGIS wybierz *Wtyczki → Zarządzanie wtyczkami → Zainstaluj z pliku ZIP*. Wymaga QGIS 3.22 lub nowszego i Pythona 3.9 lub nowszego.
+- Kod źródłowy: `qgis_plugin/zanieczyszczenie_swiatla_nocnego/`, testy okna na zaślepkach QGIS: `qgis_plugin/testy/`.
+- Status: wtyczka eksperymentalna (v1.0.0). Silnik i okno przetestowano na zaślepce Earth Engine i zaślepce QGIS (PyQt5, bez prawdziwego QGIS i bez prawdziwych danych GEE), dlatego pierwsze uruchomienie w QGIS traktuj jako test i zgłoś problemy w zakładce *Issues*.
+
 ## Co robi
 
 - **Masowo pobiera** dla obszaru z GPKG: roczne mediany VIIRS, wszystkie miesięczne kompozyty VIIRS (radiancja i liczba obserwacji), gHM, raster Natura 2000 (WDPA), tło Sentinel-2, mapy Dynamic World. Wszystko zapisuje jako GeoTIFF (`04_rastry`) i w pamięci podręcznej `_cache` (przerwane pobieranie wznawia się bez ponownych zapytań do GEE).

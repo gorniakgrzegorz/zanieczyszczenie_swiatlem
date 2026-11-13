@@ -1,0 +1,187 @@
+# -*- coding: utf-8 -*-
+"""Napisy interfejsu: polski i angielski. / Interface strings: Polish and English.
+
+tr(klucz, 'pl'|'en', **parametry). Brakujący klucz zwraca sam klucz (test sprawdza, że takich nie ma).
+"""
+
+S = {
+    # --- ogólne
+    'title': ('Zanieczyszczenie światłem nocnym', 'Night-time Light Pollution'),
+    'window_title': ('Zanieczyszczenie światłem nocnym', 'Night-time Light Pollution'),
+    'language': ('Język:', 'Language:'),
+    'tab_run': ('Analiza', 'Analysis'),
+    'tab_gee': ('Dostęp do GEE', 'GEE access'),
+    'tab_results': ('Wyniki', 'Results'),
+    'tab_log': ('Dziennik', 'Log'),
+    'tab_help': ('Pomoc', 'Help'),
+    'browse': ('Wybierz…', 'Browse…'),
+
+    # --- zakładka Analiza
+    'grp_area': ('1. Obszar badania', '1. Study area'),
+    'area_layer': ('Warstwa poligonowa z projektu:', 'Polygon layer from the project:'),
+    'only_selected': ('tylko zaznaczone obiekty', 'selected features only'),
+    'area_file': ('Plik z dysku (GPKG, SHP, GeoJSON):', 'File on disk (GPKG, SHP, GeoJSON):'),
+    'file_layer_hint': ('nazwa warstwy w pliku (puste = pierwsza)', 'layer name inside the file (empty = first)'),
+    'area_name': ('Nazwa obszaru:', 'Area name:'),
+    'name_hint': ('np. park_krajobrazowy (puste = nazwa warstwy)', 'e.g. landscape_park (empty = layer name)'),
+    'area_hint': ('Zasięg warstwy: około {km2} km², obiektów: {n}.', 'Layer extent: about {km2} km², features: {n}.'),
+    'area_big': ('Duży obszar: pobieranie potrwa długo; rozważ skalę 960 m w ustawieniach zaawansowanych.',
+                 'Large area: the download will take long; consider the 960 m scale in the advanced settings.'),
+    'choose_area_file': ('Wybierz plik z obszarem badania', 'Choose the study area file'),
+    'grp_params': ('2. Parametry', '2. Parameters'),
+    'project_id': ('Identyfikator projektu Google Cloud / GEE:', 'Google Cloud / GEE project ID:'),
+    'project_hint': ('np. moj-projekt-123456', 'e.g. my-project-123456'),
+    'how_get_project': ('Skąd go wziąć?', 'Where do I get it?'),
+    'years': ('Lata analizy:', 'Years to analyse:'),
+    'rings': ('Pierścienie wokół obszaru (m):', 'Rings around the area (m):'),
+    'rings_tip': ('Promienie stref wokół obszaru w metrach, rozdzielone przecinkami, np. 2000, 5000. Strefa 1 to sam obszar.',
+                  'Radii of the zones around the area in metres, comma separated, e.g. 2000, 5000. Zone 1 is the area itself.'),
+    'out_dir': ('Folder wyników:', 'Output folder:'),
+    'choose_out': ('Wybierz folder na wyniki', 'Choose the output folder'),
+    'grp_adv': ('Ustawienia zaawansowane', 'Advanced settings'),
+    'adv_scale': ('Skala analizy (rozdzielczość siatki):', 'Analysis scale (grid resolution):'),
+    'adv_tile': ('Rozmiar kafla pobierania (px):', 'Download tile size (px):'),
+    'adv_threads': ('Równoległe pobierania:', 'Parallel downloads:'),
+    'adv_thr': ('Progi jasności (nW·cm⁻²·sr⁻¹):', 'Brightness thresholds (nW·cm⁻²·sr⁻¹):'),
+    'thr_hint': ('np. 0.5, 5, 20 (puste = bez progów)', 'e.g. 0.5, 5, 20 (empty = no thresholds)'),
+    'opt_monthly': ('Analiza miesięczna (sezonowość)', 'Monthly analysis (seasonality)'),
+    'opt_anim': ('Animacja roczna', 'Yearly animation'),
+    'opt_anim_monthly': ('Animacja miesięczna', 'Monthly animation'),
+    'opt_bg': ('Podkład Sentinel-2 (rok):', 'Sentinel-2 background (year):'),
+    'adv_dpi': ('Rozdzielczość rycin (dpi):', 'Figure resolution (dpi):'),
+    'adv_python': ('Własny interpreter Python:', 'Custom Python interpreter:'),
+    'python_hint': ('puste = wykryj automatycznie', 'empty = detect automatically'),
+    'opt_load': ('Po zakończeniu dodaj wyniki do projektu QGIS', 'Add the results to the QGIS project when finished'),
+    'run': ('Uruchom analizę', 'Run analysis'),
+    'stop': ('Zatrzymaj', 'Stop'),
+
+    # --- błędy walidacji
+    'err_project': ('Wpisz identyfikator projektu Google Cloud / GEE (zakładka „Dostęp do GEE” wyjaśnia, jak go uzyskać).',
+                    'Enter your Google Cloud / GEE project ID (the “GEE access” tab explains how to get one).'),
+    'err_out': ('Wybierz folder na wyniki.', 'Choose the output folder.'),
+    'err_out_write': ('Nie można zapisywać w folderze wyników: {e}', 'Cannot write to the output folder: {e}'),
+    'err_rings': ('Promienie pierścieni: wpisz dodatnie liczby oddzielone przecinkami, np. 2000, 5000.',
+                  'Ring radii: enter positive numbers separated by commas, e.g. 2000, 5000.'),
+    'err_thr': ('Progi jasności: wpisz liczby oddzielone przecinkami albo zostaw puste.',
+                'Brightness thresholds: enter numbers separated by commas or leave empty.'),
+    'err_years': ('Rok końcowy nie może być wcześniejszy niż początkowy.', 'The end year cannot be earlier than the start year.'),
+    'err_file': ('Wskaż istniejący plik z obszarem badania.', 'Choose an existing study area file.'),
+    'err_layer': ('Brak warstwy poligonowej w projekcie. Dodaj ją do projektu albo wybierz plik z dysku.',
+                  'There is no polygon layer in the project. Add one or choose a file from disk.'),
+    'err_selected': ('Wybrano „tylko zaznaczone obiekty”, ale nic nie jest zaznaczone.',
+                     '“Selected features only” is ticked, but nothing is selected.'),
+    'err_empty': ('Warstwa nie zawiera obiektów.', 'The layer has no features.'),
+    'err_export': ('Nie udało się zapisać warstwy do pliku tymczasowego: {e}', 'Could not write the layer to a temporary file: {e}'),
+
+    # --- zakładka GEE
+    'grp_status': ('Stan przygotowania', 'Setup status'),
+    'btn_install': ('1. Zainstaluj biblioteki', '1. Install libraries'),
+    'btn_login': ('2. Zaloguj do Earth Engine', '2. Log in to Earth Engine'),
+    'btn_test': ('3. Sprawdź połączenie', '3. Test connection'),
+    'btn_copycmd': ('Kopiuj polecenie instalacji', 'Copy install command'),
+    'btn_open_console': ('Otwórz Google Cloud (nowy projekt)', 'Open Google Cloud (new project)'),
+    'py_ok': ('Python: {path} (wersja {ver})', 'Python: {path} (version {ver})'),
+    'py_none': ('Nie znaleziono Pythona 3.9 lub nowszego. Zainstaluj Pythona albo wskaż interpreter w ustawieniach zaawansowanych.',
+                'Python 3.9 or newer was not found. Install Python or set the interpreter in the advanced settings.'),
+    'py_none_msg': ('Nie znaleziono interpretera Python 3.9 lub nowszego, a wtyczka potrzebuje go do pobierania danych.\n\n'
+                    'Zainstaluj Pythona z python.org (zaznacz „Add to PATH”) albo wpisz ścieżkę do python.exe w Ustawieniach zaawansowanych, a następnie uruchom ponownie.',
+                    'No Python 3.9+ interpreter was found, and the plugin needs one to download data.\n\n'
+                    'Install Python from python.org (tick “Add to PATH”) or enter the path to python.exe in the Advanced settings, then try again.'),
+    'libs_ok': ('Biblioteki: zainstalowane i działają', 'Libraries: installed and working'),
+    'libs_bad': ('Biblioteki: brak lub błędne. Kliknij „Zainstaluj biblioteki”.', 'Libraries: missing or broken. Click “Install libraries”.'),
+    'libs_unk': ('Biblioteki: sprawdzanie…', 'Libraries: checking…'),
+    'login_ok': ('Logowanie: znaleziono zapisane poświadczenia Earth Engine', 'Login: saved Earth Engine credentials found'),
+    'login_no': ('Logowanie: brak poświadczeń. Kliknij „Zaloguj do Earth Engine”.', 'Login: no credentials. Click “Log in to Earth Engine”.'),
+    'proj_ok': ('Projekt: {p}', 'Project: {p}'),
+    'proj_no': ('Projekt: nie wpisano identyfikatora', 'Project: no ID entered'),
+    'conn_ok': ('Połączenie z Earth Engine: działa', 'Earth Engine connection: working'),
+    'conn_bad': ('Połączenie z Earth Engine: błąd (szczegóły w oknie komunikatu i w Dzienniku)',
+                 'Earth Engine connection: error (see the message box and the Log)'),
+    'conn_unk': ('Połączenie z Earth Engine: jeszcze nie sprawdzano', 'Earth Engine connection: not tested yet'),
+    'need_libs': ('Najpierw zainstaluj biblioteki (zakładka „Dostęp do GEE”, przycisk 1).',
+                  'Install the libraries first (“GEE access” tab, button 1).'),
+    'checking_libs': ('Sprawdzanie bibliotek…', 'Checking libraries…'),
+    'installing': ('Instalacja bibliotek: może potrwać kilka minut, wymaga internetu…',
+                   'Installing libraries: this can take a few minutes and needs internet…'),
+    'install_done': ('Instalacja zakończona (kod {code}).', 'Installation finished (code {code}).'),
+    'cmd_copied': ('Polecenie skopiowane do schowka.', 'Command copied to the clipboard.'),
+    'login_wait': ('Otworzy się przeglądarka: zaloguj się kontem Google i zezwól na dostęp. Potem wróć tutaj.',
+                   'A browser window will open: sign in with your Google account and allow access. Then come back here.'),
+    'login_done': ('Zalogowano do Earth Engine.', 'Logged in to Earth Engine.'),
+    'login_failed': ('Logowanie nie powiodło się.', 'Login failed.'),
+    'testing': ('Sprawdzanie połączenia z Earth Engine…', 'Testing the Earth Engine connection…'),
+
+    # --- komunikaty o błędach Earth Engine
+    'gee_err_auth': ('Brak ważnego logowania do Earth Engine. Zakładka „Dostęp do GEE”, przycisk „Zaloguj do Earth Engine”, potem „Sprawdź połączenie”.',
+                     'No valid Earth Engine login. Go to the “GEE access” tab, click “Log in to Earth Engine”, then “Test connection”.'),
+    'gee_err_api_disabled': ('W tym projekcie Google Cloud nie jest włączony interfejs Earth Engine API. Otwórz console.cloud.google.com/apis/library/earthengine.googleapis.com, wybierz projekt i kliknij „Włącz”.',
+                             'The Earth Engine API is not enabled in this Google Cloud project. Open console.cloud.google.com/apis/library/earthengine.googleapis.com, select the project and click “Enable”.'),
+    'gee_err_not_registered': ('Projekt nie jest zarejestrowany w Earth Engine. Zarejestruj go na console.cloud.google.com/earth-engine/configuration (użycie niekomercyjne jest bezpłatne).',
+                               'The project is not registered for Earth Engine. Register it at console.cloud.google.com/earth-engine/configuration (non-commercial use is free).'),
+    'gee_err_permission': ('Brak uprawnień do tego projektu. Zaloguj się kontem, które jest właścicielem projektu, albo nadaj mu rolę „Earth Engine Resource Viewer” i „Service Usage Consumer”.',
+                           'No permission for this project. Log in with the account that owns the project, or grant it the “Earth Engine Resource Viewer” and “Service Usage Consumer” roles.'),
+    'gee_err_project': ('Nie znaleziono projektu o podanym identyfikatorze. Sprawdź pisownię: to identyfikator (np. moj-projekt-123456), a nie nazwa wyświetlana.',
+                        'The project with this ID was not found. Check the spelling: it is the project ID (e.g. my-project-123456), not the display name.'),
+    'gee_err_network': ('Problem z połączeniem sieciowym (internet, zapora, serwer proxy). Sprawdź połączenie i spróbuj ponownie.',
+                        'Network problem (internet, firewall, proxy). Check the connection and try again.'),
+    'gee_err_other': ('Nieoczekiwany błąd Earth Engine. Szczegóły poniżej i w Dzienniku.', 'Unexpected Earth Engine error. Details below and in the Log.'),
+
+    # --- przebieg
+    'running': ('Analiza w toku…', 'Analysis running…'),
+    'stopped': ('Zatrzymano na polecenie użytkownika.', 'Stopped by the user.'),
+    'run_done': ('Gotowe. Wyniki są w folderze wyników.', 'Done. The results are in the output folder.'),
+    'run_done_errors': ('Gotowe, ale część pobrań się nie udała.', 'Done, but some downloads failed.'),
+    'run_done_errors_msg': ('Analiza zakończyła się, ale część danych nie została pobrana (lista w tabeli pobranie_bledy.csv i w raporcie). Wyniki są częściowe; uruchom analizę ponownie: pobrane kafle są zapamiętane, więc zostaną dopobrane tylko brakujące.',
+                            'The analysis finished, but some data could not be downloaded (see pobranie_bledy.csv and the report). The results are partial; run again: downloaded tiles are cached, so only the missing ones are fetched.'),
+    'run_failed': ('Analiza nie powiodła się.', 'The analysis failed.'),
+    'run_failed_msg': ('Analiza zakończyła się błędem (kod {code}). Ostatnie linie dziennika:', 'The analysis ended with an error (code {code}). Last log lines:'),
+    'run_crash_hint': ('Wygląda na brak bibliotek. Zakładka „Dostęp do GEE”, przycisk „Zainstaluj biblioteki”.',
+                       'This looks like missing libraries. Go to the “GEE access” tab and click “Install libraries”.'),
+    'btn_clear_log': ('Wyczyść', 'Clear'),
+    'btn_copy_log': ('Kopiuj do schowka', 'Copy to clipboard'),
+
+    # --- wyniki
+    'results_in': ('Wyniki w folderze: {p}', 'Results in folder: {p}'),
+    'folder_tables': ('Tabele (CSV)', 'Tables (CSV)'),
+    'folder_figures': ('Ryciny (PNG)', 'Figures (PNG)'),
+    'folder_anims': ('Animacje', 'Animations'),
+    'folder_rasters': ('Rastry (GeoTIFF)', 'Rasters (GeoTIFF)'),
+    'folder_vectors': ('Wektory (GPKG)', 'Vectors (GPKG)'),
+    'folder_report': ('Raport i parametry', 'Report and parameters'),
+    'grp_layers': ('Które warstwy dodać do projektu', 'Layers to add to the project'),
+    'ld_annual': ('Jasność roczna (pasma = lata)', 'Annual brightness (bands = years)'),
+    'ld_trend': ('Trend Theil–Sen (nachylenie i p)', 'Theil–Sen trend (slope and p)'),
+    'ld_monthly': ('Jasność miesięczna (pasma = miesiące)', 'Monthly brightness (bands = months)'),
+    'ld_bg': ('Podkład Sentinel-2', 'Sentinel-2 background'),
+    'ld_zones': ('Strefy analizy (wektor)', 'Analysis zones (vector)'),
+    'ld_tables': ('Tabele CSV jako warstwy', 'CSV tables as layers'),
+    'btn_add_layers': ('Dodaj warstwy do QGIS', 'Add layers to QGIS'),
+    'btn_open_folder': ('Otwórz folder', 'Open folder'),
+    'btn_open_prev': ('Wczytaj wcześniejsze wyniki…', 'Load earlier results…'),
+    'choose_prev': ('Wybierz folder wyników wcześniejszej analizy', 'Choose the results folder of an earlier analysis'),
+    'prev_invalid': ('To nie wygląda na folder wyników wtyczki (brak podfolderu 04_rastry).',
+                     'This does not look like a plugin results folder (no 04_rastry subfolder).'),
+    'no_results': ('Najpierw uruchom analizę albo wczytaj wcześniejsze wyniki.', 'Run an analysis first or load earlier results.'),
+    'group_name': ('Światło nocne: {name}', 'Night light: {name}'),
+    'layer_invalid': ('Nie udało się wczytać warstwy: {n}', 'Could not load the layer: {n}'),
+    'layers_added': ('Dodano warstw: {n}.', 'Layers added: {n}.'),
+    'lyr_annual': ('VIIRS jasność roczna', 'VIIRS annual brightness'),
+    'lyr_trend': ('VIIRS trend (Theil–Sen)', 'VIIRS trend (Theil–Sen)'),
+    'lyr_monthly': ('VIIRS jasność miesięczna', 'VIIRS monthly brightness'),
+    'lyr_monthly_cf': ('VIIRS liczba obserwacji bezchmurnych', 'VIIRS cloud-free observation count'),
+    'lyr_bg': ('Sentinel-2 podkład', 'Sentinel-2 background'),
+    'lyr_zones': ('Strefy analizy', 'Analysis zones'),
+}
+
+
+def tr(key, lang='pl', **kw):
+    pair = S.get(key)
+    if pair is None:
+        return key
+    text = pair[0] if lang == 'pl' else pair[1]
+    if kw:
+        try:
+            return text.format(**kw)
+        except (KeyError, IndexError):
+            return text
+    return text
