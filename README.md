@@ -2,7 +2,7 @@
 
 Presje zewnętrzne na dowolny obszar z pliku GPKG: sztuczne światło nocą, modyfikacja przez człowieka i obszary Natura 2000.
 
-**Strona z opisem metody, podstawami naukowymi i przewodnikiem dla początkujących:** https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/
+**Strona z opisem metody, podstawami naukowymi i przewodnikiem krok po kroku:** https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/
 
 **Nigdy nie programowałeś?** Zacznij od [przewodnika krok po kroku](https://gorniakgrzegorz.github.io/zanieczyszczenie_swiatlem/#przewodnik): konto Google, własny projekt Earth Engine, plik z obszarem, Colab.
 
